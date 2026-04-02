@@ -1,0 +1,1 @@
+#This is a Python package for the campus navigation API. It contains the main application factory and any necessary initialization code.
