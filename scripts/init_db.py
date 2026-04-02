@@ -52,6 +52,19 @@ def init_db():
     else:
         print(f"⚠️ CSV file not found! Please make sure it is placed at {CSV_PATH}")
 
+    # 4. Automatically read and import paths (Paths) CSV
+    PATHS_CSV = os.path.join(BASE_DIR, "data", "paths.csv")
+    if os.path.exists(PATHS_CSV):
+        print(f"Found paths CSV file: {PATHS_CSV}, preparing to import...")
+        with open(PATHS_CSV, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            paths_data = [(row['start_name'], row['end_name'], int(row['time_seconds'])) for row in reader]
+
+        cursor.executemany('INSERT INTO paths (start_name, end_name, time_seconds) VALUES (?, ?, ?)', paths_data)
+        print(f"🎉 Successfully imported {len(paths_data)} navigation paths!")
+    else:
+        print(f"⚠️ Paths CSV file not found! Please make sure it is placed at {PATHS_CSV}")
+
     # Commit and close
     conn.commit()
     conn.close()
