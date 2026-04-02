@@ -4,3 +4,6 @@ uvicorn
 
 # Document verification (FastAPI built-in dependencies).
 pydantic
+
+# geopy
+geopy

@@ -1,26 +1,34 @@
 import sqlite3
 import os
+import csv
 
-# Set up the path to the SQLite database file (we'll create it in the data folder)
+# 設定檔案路徑
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "data", "campus.db")
+CSV_PATH = os.path.join(BASE_DIR, "data", "buildings.csv")
 
 def init_db():
-    # Connect to the SQLite database (it will be created if it doesn't exist)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # 1. Create the locations table
+    print("Removing old tables...")
+    cursor.execute('DROP TABLE IF EXISTS paths')
+    cursor.execute('DROP TABLE IF EXISTS locations')
+
+    print("Creating new tables...")
+    # 1. Create locations table (with lat/lon columns)
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS locations (
+        CREATE TABLE locations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL
+            name TEXT UNIQUE NOT NULL,
+            lat REAL,
+            lon REAL
         )
     ''')
 
-    # 2. Create the paths table
+    # 2. Create paths table (temporarily empty, will import routes later)
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS paths (
+        CREATE TABLE paths (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             start_name TEXT NOT NULL,
             end_name TEXT NOT NULL,
@@ -30,46 +38,24 @@ def init_db():
         )
     ''')
 
-    # Clear old data (for convenient repeated testing)
-    cursor.execute('DELETE FROM paths')
-    cursor.execute('DELETE FROM locations')
+    # 3. Automatically read CSV and import data
+    if os.path.exists(CSV_PATH):
+        print(f"Found CSV file: {CSV_PATH}, preparing to import...")
+        with open(CSV_PATH, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            # Convert each row in the CSV to (name, lat, lon) format
+            locations_data = [(row['name'], float(row['lat']), float(row['lon'])) for row in reader]
 
-    # 3. Prepare our initial location data
-    locations = [
-        "通訊系館_109", "通訊系館_110", "通訊系館_111", 
-        "通訊系館_102", "通訊系館_走廊", "通訊系館_大門", 
-        "教研大樓", "健雄館"
-    ]
-    
-    for loc in locations:
-        cursor.execute('INSERT INTO locations (name) VALUES (?)', (loc,))
+        # Batch insert into the database
+        cursor.executemany('INSERT INTO locations (name, lat, lon) VALUES (?, ?, ?)', locations_data)
+        print(f"🎉 Successfully imported {len(locations_data)} campus landmarks!")
+    else:
+        print(f"⚠️ CSV file not found! Please make sure it is placed at {CSV_PATH}")
 
-    # 4. Prepare our initial path data (both directions)
-    paths = [
-        ("通訊系館_109", "通訊系館_走廊", 5),
-        ("通訊系館_走廊", "通訊系館_109", 5),
-        ("通訊系館_110", "通訊系館_走廊", 8),
-        ("通訊系館_走廊", "通訊系館_110", 8),
-        ("通訊系館_111", "通訊系館_走廊", 12),
-        ("通訊系館_走廊", "通訊系館_111", 12),
-        ("通訊系館_102", "通訊系館_走廊", 15),
-        ("通訊系館_走廊", "通訊系館_102", 15),
-        ("通訊系館_走廊", "通訊系館_大門", 20),
-        ("通訊系館_大門", "通訊系館_走廊", 20),
-        ("通訊系館_大門", "教研大樓", 180),
-        ("教研大樓", "通訊系館_大門", 180),
-        ("通訊系館_大門", "健雄館", 240),
-        ("健雄館", "通訊系館_大門", 240),
-        ("教研大樓", "健雄館", 120),
-        ("健雄館", "教研大樓", 120)
-    ]
-
-    cursor.executemany('INSERT INTO paths (start_name, end_name, time_seconds) VALUES (?, ?, ?)', paths)
-
-    # Save and close
+    # Commit and close
     conn.commit()
     conn.close()
-    print(f"✅ Database created successfully! Saved at: {DB_PATH}")
+    print(f"✅ Database rebuild complete! Your API now has real latitude and longitude data!")
 
 if __name__ == "__main__":
     init_db()
