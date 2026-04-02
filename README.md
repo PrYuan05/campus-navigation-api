@@ -19,4 +19,4 @@
 ### 1. 安裝依賴套件
 請確保你的電腦已安裝 Python，接著在終端機輸入以下指令安裝所需套件：
 ```bash
-pip install fastapi uvicorn
+pip install fastapi uvicorn# campus-navigation-api
