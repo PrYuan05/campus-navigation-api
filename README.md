@@ -28,15 +28,17 @@
    python -m venv .venv
    source .venv/Scripts/activate  # Windows
    pip install -r requirements.txt
-初始化資料庫
 
-Bash
-python scripts/auto_generate_paths.py  # 自動生成路徑
-python scripts/init_db.py              # 重建資料庫
-啟動伺服器
+2. **初始化資料庫**
+   ```bash
+   python scripts/auto_generate_paths.py  # 自動生成路徑
+   python scripts/init_db.py              # 重建資料庫
 
-Bash
-uvicorn app.main:app --reload
+
+3. **啟動伺服器**
+   ```bash
+   uvicorn app.main:app --reload
+
 前往 http://127.0.0.1:8000/docs 開始測試！
 
 📂 專案結構
