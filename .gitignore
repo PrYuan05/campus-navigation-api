@@ -19,6 +19,6 @@ gcp-key.json
 Thumbs.db
 
 # --- SQLite database file ---
-*.db
+# *.db (Commented out to allow data/campus.db)
 *.sqlite3
 *.sqlite
