@@ -1,17 +1,28 @@
-# 📍 NCU Campus Navigation API (中央大學智慧校園導航系統)
+# 🏫 NCU Campus Navigation API (OpenTPI)
 
-![Project Status](https://img.shields.io/badge/Status-Development-orange)
-![Python Version](https://img.shields.io/badge/Python-3.9+-blue)
-![Framework](https://img.shields.io/badge/Framework-FastAPI-green)
+這是一個專為中央大學設計的語意導航後端系統。使用者可以透過自然語言（例如：「我要從依仁堂去大禮堂」）進行詢問，系統會自動辨識校園建築物、查詢精確座標，並串接 Google Maps API 計算最優步行路徑。
 
-這是一個為 **中央大學** 量身打造的智慧化導航後端系統。透過 Dijkstra 演算法與真實地理座標 (OSM)，提供校內系館、宿舍及生活圈的最短路徑規劃。
+## 🌟 核心功能
+- **自然語言辨識 (NLU)**：使用 Google Vertex AI (Gemini 2.5 Flash) 進行地點對齊與意圖分析。
+- **校園資料庫**：內建 SQLite 支援 150+ 個校園地點的精確座標查詢。
+- **即時導航數據**：整合 Google Maps Directions API，提供距離與步行預估時間。
+- **Token 優化**：自研關鍵字過濾演算法，極大化 API 響應速度並降低成本。
 
-## 🌟 核心特色
-
-- **資料庫驅動**：使用 SQLite 管理 130+ 個校園地標座標。
-- **自動化拓撲**：利用 Haversine 演算法自動計算空間鄰近性並構建導航路徑。
-- **高效能導航**：實作 Dijkstra 最短路徑演算法，支援步行時間預估。
-- **標準 API 規範**：基於 FastAPI 開發，內建 Swagger 互動式文件。
+## 📁 目錄結構
+```text
+campus-navigation-api/
+├── app/                    # 核心程式碼
+│   ├── main.py             # FastAPI 路由與 AI 邏輯
+│   └── maps_service.py     # Google Maps API 封裝
+├── data/                   # 資料存儲 (資料庫與圖資)
+├── docs/                   # 專案文件 (版本紀錄)
+├── scripts/                # 自動化與維護腳本
+├── tests/                  # 測試腳本
+├── .env.example            # 環境變數範例檔
+├── requirements.txt        # 依賴套件清單
+├── LICENSE                 # 授權條款
+└── README.md
+```
 
 ## 🛠️ 技術棧
 
@@ -42,10 +53,10 @@
 前往 http://127.0.0.1:8000/docs 開始測試！
 
 📂 專案結構
-app/: API 核心邏輯與演算法。
-
-data/: 存放原始 CSV 圖資與 SQLite 資料庫。
-
-scripts/: 資料處理與資料庫維護腳本。
+- `app/`: API 核心邏輯與演算法。
+- `data/`: 存放原始 CSV 圖資與 SQLite 資料庫。
+- `scripts/`: 資料處理與資料庫維護腳本。
+- `docs/`: 專案相關文件與版本更新紀錄。
+- `tests/`: 用於確保 API 健康度與外部連線的測試腳本。
 
 Developed with ❤️ by NCU Communication Engineering Student (李元皓)
