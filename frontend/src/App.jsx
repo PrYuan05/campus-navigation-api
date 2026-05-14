@@ -79,12 +79,45 @@ function App() {
     setInput('');
 
     try {
-      // Send to FastAPI backend
-      const res = await fetch('http://localhost:8000/api/v1/chat-navigation', {
+      // 1. Fetch JWT Token from digiRunner (using keys from .env.local)
+      const clientId = import.meta.env.VITE_CLIENT_ID;
+      const clientSecret = import.meta.env.VITE_CLIENT_SECRET;
+      
+      let token = '';
+      try {
+        const tokenRes = await fetch('/dgrv4/ssotoken/oauth/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Basic ' + btoa(`${clientId}:${clientSecret}`)
+          },
+          body: new URLSearchParams({ grant_type: 'client_credentials' })
+        });
+        
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          token = tokenData.access_token;
+        } else {
+          console.warn('Failed to fetch token:', await tokenRes.text());
+        }
+      } catch (err) {
+        console.warn('Token request error:', err);
+      }
+
+      // 2. Inject Token into Header and send request to the protected API
+      const reqHeaders = { 'Content-Type': 'application/json' };
+      if (token) reqHeaders['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/chat-navigation', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: reqHeaders,
         body: JSON.stringify({ user_message: text })
       });
+      
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`${res.status} ${res.statusText}: ${errText}`);
+      }
       
       const data = await res.json();
       let botResponse = '';
@@ -110,7 +143,7 @@ function App() {
 
     } catch (error) {
       console.error(error);
-      const errorMsg = '無法連接到伺服器。請確認後端(localhost:8000)是否正在運行。';
+      const errorMsg = `請求失敗：${error.message}`;
       setMessages(prev => [...prev, { id: Date.now() + 1, text: errorMsg, sender: 'bot' }]);
     }
   };

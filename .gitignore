@@ -22,3 +22,7 @@ Thumbs.db
 # *.db (Commented out to allow data/campus.db)
 *.sqlite3
 *.sqlite
+# --- Deployment & Temp Files ---
+deploy_frontend.zip
+req.json
+openpi-temp/

@@ -1,0 +1,50 @@
+services:
+  # 1. Backend FastAPI Service
+  backend:
+    build: .                 
+    container_name: ncu_backend
+    ports:
+      - "8000:8000"          
+    volumes:
+      - ./app:/app/app       
+      - ./data:/app/data     
+      - ./.env:/app/.env     
+      - ./gcp-key.json:/app/gcp-key.json
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json
+    restart: unless-stopped
+    networks:
+      - campus_network
+
+  # 2. digiRunner Open Source API Gateway
+  dgr:
+    image: tpisoftwareopensource/digirunner-open-source:latest
+    container_name: ncu_digirunner
+    ports:
+      - "31080:18080"        # Map gateway UI/API to local port 31080
+    environment:
+      - TZ=Asia/Taipei
+    restart: unless-stopped
+    networks:
+      - campus_network
+
+  # 3. Nginx Web Server (Frontend & API Proxy)
+  nginx:
+    image: nginx:alpine
+    container_name: ncu_frontend
+    ports:
+      - "80:80"              # Map public HTTP port 80
+    volumes:
+      - ./dist:/usr/share/nginx/html  # Serve built React app
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf # Nginx config
+    depends_on:
+      - backend
+      - dgr
+    restart: unless-stopped
+    networks:
+      - campus_network
+
+# Create a dedicated Docker network so the gateway and backend can communicate directly
+networks:
+  campus_network:
+    driver: bridge

@@ -56,20 +56,15 @@ DB_PATH = os.path.join("data", "campus.db")
 # 📊 Database Logic (Optimized)
 # ==========================================
 
-def get_relevant_locations(user_input: str):
-    """Filter database to reduce context tokens (avoids 429 errors)."""
+def get_all_locations():
+    """Get all locations from DB to pass to AI context."""
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM locations")
         all_names = [row[0] for row in cursor.fetchall()]
         conn.close()
-
-        # Simple keyword matching to narrow down the list
-        relevant = [name for name in all_names if any(char in user_input for char in name)]
-        
-        # Fallback to a small subset if no keyword match
-        return relevant if relevant else all_names[:15]
+        return all_names
     except Exception as e:
         print(f"[DB Error] {e}")
         return []
@@ -102,8 +97,8 @@ async def root():
 
 @app.post("/api/v1/chat-navigation")
 async def process_chat_navigation(request: ChatRequest):
-    # 1. Narrow down building list to save tokens
-    relevant_list = get_relevant_locations(request.user_message)
+    # 1. Provide all buildings so AI can resolve aliases correctly
+    relevant_list = get_all_locations()
     context_str = ", ".join(relevant_list)
 
     # 2. Build the NLU Prompt
@@ -112,7 +107,7 @@ async def process_chat_navigation(request: ChatRequest):
     Extract 'origin' and 'destination' from user input and map them to the Official List.
     Input: "{request.user_message}"
     Rules:
-    - ALWAYS resolve student abbreviations/aliases to their official names (e.g., "工一" -> "工程一館", "文一" -> "文學一館", "管二" -> "管理學院二館", "總圖" -> "總圖書館").
+    - ALWAYS resolve student abbreviations/aliases to their official names (e.g., "工一" -> "工程一館", "文一" -> "文學一館", "管二" -> "管理學院二館", "總圖" -> "總圖書館", "七餐" -> "第七餐廳", "通訊系" -> "工程五館").
     - After resolving, your returned 'origin' and 'destination' MUST exactly match items in the Official List if possible.
     - If origin is missing natively, use "CURRENT_LOCATION".
     - If a place is completely unrecognized and not in the list, just return what the user said.
